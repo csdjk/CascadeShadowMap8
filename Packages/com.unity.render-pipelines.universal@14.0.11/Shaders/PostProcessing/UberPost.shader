@@ -139,7 +139,6 @@ Shader "Hidden/Universal Render Pipeline/UberPost"
 
         return uv;
     }
-#pragma enable_d3d11_debug_symbols
     half4 FragUberPost(Varyings input) : SV_Target
     {
         UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -236,11 +235,9 @@ Shader "Hidden/Universal Render Pipeline/UberPost"
         }
 
         // Color grading is always enabled when post-processing/uber is active
-
         {
             color = ApplyColorGrading(color, PostExposure, TEXTURE2D_ARGS(_InternalLut, sampler_LinearClamp), LutParams, TEXTURE2D_ARGS(_UserLut, sampler_LinearClamp), UserLutParams, UserLutContribution);
         }
-        return half4(color,1);
 
         #if _FILM_GRAIN
             {
