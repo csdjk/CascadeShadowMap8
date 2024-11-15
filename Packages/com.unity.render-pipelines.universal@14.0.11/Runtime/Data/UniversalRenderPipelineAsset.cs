@@ -493,6 +493,12 @@ namespace UnityEngine.Rendering.Universal
         [SerializeField] float m_Cascade2Split = 0.25f;
         [SerializeField] Vector2 m_Cascade3Split = new Vector2(0.1f, 0.3f);
         [SerializeField] Vector3 m_Cascade4Split = new Vector3(0.067f, 0.2f, 0.467f);
+        //todo:lcl
+        [SerializeField] float m_Cascade5Split = 0.25f;
+        [SerializeField] Vector2 m_Cascade6Split = new Vector2(0.1f, 0.3f);
+        [SerializeField] Vector3 m_Cascade7Split = new Vector3(0.067f, 0.2f, 0.467f);
+        [SerializeField] Vector4 m_Cascade8Split = new Vector4(0.05f, 0.15f, 0.3f, 0.5f);
+
         [SerializeField] float m_CascadeBorder = 0.2f;
         [SerializeField] float m_ShadowDepthBias = 1.0f;
         [SerializeField] float m_ShadowNormalBias = 1.0f;
@@ -574,8 +580,9 @@ namespace UnityEngine.Rendering.Universal
         /// </summary>
         public const int k_MaxLutSize = 65;
 
+        //todo:lcl
         internal const int k_ShadowCascadeMinCount = 1;
-        internal const int k_ShadowCascadeMaxCount = 4;
+        internal const int k_ShadowCascadeMaxCount = 8;
 
         /// <summary>
         /// The default value of `additionalLightsShadowResolutionTierLow`.
@@ -1317,6 +1324,29 @@ namespace UnityEngine.Rendering.Universal
         {
             get { return m_Cascade4Split; }
             internal set { m_Cascade4Split = value; }
+        }
+
+        ///todo:lcl
+        ///======================================= 新增4 Level Cascade ==========================================================
+        public float cascade5Split
+        {
+            get { return m_Cascade5Split; }
+            internal set { m_Cascade5Split = value; }
+        }
+        public Vector2 cascade6Split
+        {
+            get { return m_Cascade6Split; }
+            internal set { m_Cascade6Split = value; }
+        }
+        public Vector3 cascade7Split
+        {
+            get { return m_Cascade7Split; }
+            internal set { m_Cascade7Split = value; }
+        }
+        public Vector4 cascade8Split
+        {
+            get { return m_Cascade8Split; }
+            internal set { m_Cascade8Split = value; }
         }
 
         /// <summary>

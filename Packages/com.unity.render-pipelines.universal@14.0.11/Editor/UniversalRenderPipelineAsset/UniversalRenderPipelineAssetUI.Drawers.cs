@@ -393,15 +393,39 @@ namespace UnityEditor.Rendering.Universal
             EditorGUILayout.PropertyField(serialized.conservativeEnclosingSphereProp, Styles.conservativeEnclosingSphere);
         }
 
+        //todo:lcl
         static void DrawCascadeSliders(SerializedUniversalRenderPipelineAsset serialized, int splitCount, bool useMetric, float baseMetric)
         {
             Vector4 shadowCascadeSplit = Vector4.one;
+            Vector4 shadowCascadeSplit2 = Vector4.zero;
             if (splitCount == 3)
                 shadowCascadeSplit = new Vector4(serialized.shadowCascade4SplitProp.vector3Value.x, serialized.shadowCascade4SplitProp.vector3Value.y, serialized.shadowCascade4SplitProp.vector3Value.z, 1);
             else if (splitCount == 2)
                 shadowCascadeSplit = new Vector4(serialized.shadowCascade3SplitProp.vector2Value.x, serialized.shadowCascade3SplitProp.vector2Value.y, 1, 0);
             else if (splitCount == 1)
                 shadowCascadeSplit = new Vector4(serialized.shadowCascade2SplitProp.floatValue, 1, 0, 0);
+            else if (splitCount == 4)
+            {
+                shadowCascadeSplit = new Vector4(serialized.shadowCascade4SplitProp.vector3Value.x, serialized.shadowCascade4SplitProp.vector3Value.y, serialized.shadowCascade4SplitProp.vector3Value.z, 1);
+                shadowCascadeSplit2 = new Vector4(serialized.shadowCascade5SplitProp.floatValue, 1, 0, 0);
+            }
+            else if (splitCount == 5)
+            {
+                shadowCascadeSplit = new Vector4(serialized.shadowCascade4SplitProp.vector3Value.x, serialized.shadowCascade4SplitProp.vector3Value.y, serialized.shadowCascade4SplitProp.vector3Value.z, 1);
+                shadowCascadeSplit2 = new Vector4(serialized.shadowCascade6SplitProp.vector2Value.x, serialized.shadowCascade6SplitProp.vector2Value.y, 1, 0);
+            }
+            else if (splitCount == 6)
+            {
+                shadowCascadeSplit = new Vector4(serialized.shadowCascade4SplitProp.vector3Value.x, serialized.shadowCascade4SplitProp.vector3Value.y, serialized.shadowCascade4SplitProp.vector3Value.z, 1);
+                shadowCascadeSplit2 = new Vector4(serialized.shadowCascade7SplitProp.vector3Value.x, serialized.shadowCascade7SplitProp.vector3Value.y, serialized.shadowCascade7SplitProp.vector3Value.z, 1);
+            }
+            else if (splitCount == 7)
+            {
+                shadowCascadeSplit = new Vector4(serialized.shadowCascade4SplitProp.vector3Value.x, serialized.shadowCascade4SplitProp.vector3Value.y, serialized.shadowCascade4SplitProp.vector3Value.z, 1);
+                shadowCascadeSplit2 = new Vector4(serialized.shadowCascade8SplitProp.vector4Value.x, serialized.shadowCascade8SplitProp.vector4Value.y, serialized.shadowCascade8SplitProp.vector4Value.z, serialized.shadowCascade8SplitProp.vector4Value.w);
+            }
+
+
 
             float splitBias = 0.001f;
             float invBaseMetric = baseMetric == 0 ? 0 : 1f / baseMetric;
