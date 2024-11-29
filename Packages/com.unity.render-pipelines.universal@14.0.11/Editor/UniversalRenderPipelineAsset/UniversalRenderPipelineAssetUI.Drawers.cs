@@ -396,45 +396,38 @@ namespace UnityEditor.Rendering.Universal
         //todo:lcl
         static void DrawCascadeSliders(SerializedUniversalRenderPipelineAsset serialized, int splitCount, bool useMetric, float baseMetric)
         {
-            Vector4 shadowCascadeSplit = Vector4.one;
-            Vector4 shadowCascadeSplit2 = Vector4.zero;
-            if (splitCount == 3)
-                shadowCascadeSplit = new Vector4(serialized.shadowCascade4SplitProp.vector3Value.x, serialized.shadowCascade4SplitProp.vector3Value.y, serialized.shadowCascade4SplitProp.vector3Value.z, 1);
-            else if (splitCount == 2)
-                shadowCascadeSplit = new Vector4(serialized.shadowCascade3SplitProp.vector2Value.x, serialized.shadowCascade3SplitProp.vector2Value.y, 1, 0);
-            else if (splitCount == 1)
-                shadowCascadeSplit = new Vector4(serialized.shadowCascade2SplitProp.floatValue, 1, 0, 0);
-            else if (splitCount == 4)
+            //array of shadowCascadeSplitsProp
+            int arraySize = serialized.shadowCascadeSplitsProp.arraySize;
+            float[] shadowCascadeSplit = new float[arraySize];
+            for (int i = 0; i < arraySize; i++)
             {
-                shadowCascadeSplit = new Vector4(serialized.shadowCascade4SplitProp.vector3Value.x, serialized.shadowCascade4SplitProp.vector3Value.y, serialized.shadowCascade4SplitProp.vector3Value.z, 1);
-                shadowCascadeSplit2 = new Vector4(serialized.shadowCascade5SplitProp.floatValue, 1, 0, 0);
-            }
-            else if (splitCount == 5)
-            {
-                shadowCascadeSplit = new Vector4(serialized.shadowCascade4SplitProp.vector3Value.x, serialized.shadowCascade4SplitProp.vector3Value.y, serialized.shadowCascade4SplitProp.vector3Value.z, 1);
-                shadowCascadeSplit2 = new Vector4(serialized.shadowCascade6SplitProp.vector2Value.x, serialized.shadowCascade6SplitProp.vector2Value.y, 1, 0);
-            }
-            else if (splitCount == 6)
-            {
-                shadowCascadeSplit = new Vector4(serialized.shadowCascade4SplitProp.vector3Value.x, serialized.shadowCascade4SplitProp.vector3Value.y, serialized.shadowCascade4SplitProp.vector3Value.z, 1);
-                shadowCascadeSplit2 = new Vector4(serialized.shadowCascade7SplitProp.vector3Value.x, serialized.shadowCascade7SplitProp.vector3Value.y, serialized.shadowCascade7SplitProp.vector3Value.z, 1);
-            }
-            else if (splitCount == 7)
-            {
-                shadowCascadeSplit = new Vector4(serialized.shadowCascade4SplitProp.vector3Value.x, serialized.shadowCascade4SplitProp.vector3Value.y, serialized.shadowCascade4SplitProp.vector3Value.z, 1);
-                shadowCascadeSplit2 = new Vector4(serialized.shadowCascade8SplitProp.vector4Value.x, serialized.shadowCascade8SplitProp.vector4Value.y, serialized.shadowCascade8SplitProp.vector4Value.z, serialized.shadowCascade8SplitProp.vector4Value.w);
+                shadowCascadeSplit[i] = i < splitCount ? serialized.shadowCascadeSplitsProp.GetArrayElementAtIndex(i).floatValue : 1;
             }
 
-
+            // Vector4 shadowCascadeSplit = Vector4.one;
+            // Vector4 shadowCascadeSplit2 = Vector4.zero;
+            // if (splitCount == 3)
+            //     shadowCascadeSplit = new Vector4(serialized.shadowCascade4SplitProp.vector3Value.x,
+            // serialized.shadowCascade4SplitProp.vector3Value.y, serialized.shadowCascade4SplitProp.vector3Value.z, 1);
+            // else if (splitCount == 2)
+            //     shadowCascadeSplit = new Vector4(serialized.shadowCascade3SplitProp.vector2Value.x,
+            // serialized.shadowCascade3SplitProp.vector2Value.y, 1, 0);
+            // else if (splitCount == 1)
+            //     shadowCascadeSplit = new Vector4(serialized.shadowCascade2SplitProp.floatValue, 1, 0, 0);
 
             float splitBias = 0.001f;
             float invBaseMetric = baseMetric == 0 ? 0 : 1f / baseMetric;
 
             // Ensure correct split order
-            shadowCascadeSplit[0] = Mathf.Clamp(shadowCascadeSplit[0], 0f, shadowCascadeSplit[1] - splitBias);
-            shadowCascadeSplit[1] = Mathf.Clamp(shadowCascadeSplit[1], shadowCascadeSplit[0] + splitBias, shadowCascadeSplit[2] - splitBias);
-            shadowCascadeSplit[2] = Mathf.Clamp(shadowCascadeSplit[2], shadowCascadeSplit[1] + splitBias, shadowCascadeSplit[3] - splitBias);
-
+            // shadowCascadeSplit[0] = Mathf.Clamp(shadowCascadeSplit[0], 0f, shadowCascadeSplit[1] - splitBias);
+            // shadowCascadeSplit[1] = Mathf.Clamp(shadowCascadeSplit[1], shadowCascadeSplit[0] + splitBias, shadowCascadeSplit[2] - splitBias);
+            // shadowCascadeSplit[2] = Mathf.Clamp(shadowCascadeSplit[2], shadowCascadeSplit[1] + splitBias, shadowCascadeSplit[3] - splitBias);
+            for (int i = 0; i < splitCount; i++)
+            {
+                float minimum = i == 0 ? 0f : shadowCascadeSplit[i - 1] + splitBias;
+                float maximum = shadowCascadeSplit[i + 1] - splitBias;
+                shadowCascadeSplit[i] = Mathf.Clamp(shadowCascadeSplit[i], minimum, maximum);
+            }
 
             EditorGUI.BeginChangeCheck();
             for (int i = 0; i < splitCount; ++i)
@@ -462,18 +455,22 @@ namespace UnityEditor.Rendering.Universal
 
             if (EditorGUI.EndChangeCheck())
             {
-                switch (splitCount)
+                for (int i = 0; i < arraySize; i++)
                 {
-                    case 3:
-                        serialized.shadowCascade4SplitProp.vector3Value = shadowCascadeSplit;
-                        break;
-                    case 2:
-                        serialized.shadowCascade3SplitProp.vector2Value = shadowCascadeSplit;
-                        break;
-                    case 1:
-                        serialized.shadowCascade2SplitProp.floatValue = shadowCascadeSplit.x;
-                        break;
+                    serialized.shadowCascadeSplitsProp.GetArrayElementAtIndex(i).floatValue = shadowCascadeSplit[i];
                 }
+                // switch (splitCount)
+                // {
+                //     case 3:
+                //         serialized.shadowCascade4SplitProp.vector3Value = shadowCascadeSplit;
+                //         break;
+                //     case 2:
+                //         serialized.shadowCascade3SplitProp.vector2Value = shadowCascadeSplit;
+                //         break;
+                //     case 1:
+                //         serialized.shadowCascade2SplitProp.floatValue = shadowCascadeSplit.x;
+                //         break;
+                // }
             }
 
             var borderValue = serialized.shadowCascadeBorderProp.floatValue;
@@ -506,15 +503,22 @@ namespace UnityEditor.Rendering.Universal
         {
             var cascades = new ShadowCascadeGUI.Cascade[cascadeCount];
 
-            Vector3 shadowCascadeSplit = Vector3.zero;
-            if (cascadeCount == 4)
-                shadowCascadeSplit = serialized.shadowCascade4SplitProp.vector3Value;
-            else if (cascadeCount == 3)
-                shadowCascadeSplit = serialized.shadowCascade3SplitProp.vector2Value;
-            else if (cascadeCount == 2)
-                shadowCascadeSplit.x = serialized.shadowCascade2SplitProp.floatValue;
-            else
-                shadowCascadeSplit.x = serialized.shadowCascade2SplitProp.floatValue;
+            int arraySize = serialized.shadowCascadeSplitsProp.arraySize;
+            float[] shadowCascadeSplit = new float[arraySize];
+            for (int i = 0; i < arraySize; i++)
+            {
+                shadowCascadeSplit[i] = serialized.shadowCascadeSplitsProp.GetArrayElementAtIndex(i).floatValue;
+            }
+
+            // Vector3 shadowCascadeSplit = Vector3.zero;
+            // if (cascadeCount == 4)
+            //     shadowCascadeSplit = serialized.shadowCascade4SplitProp.vector3Value;
+            // else if (cascadeCount == 3)
+            //     shadowCascadeSplit = serialized.shadowCascade3SplitProp.vector2Value;
+            // else if (cascadeCount == 2)
+            //     shadowCascadeSplit.x = serialized.shadowCascade2SplitProp.floatValue;
+            // else
+            //     shadowCascadeSplit.x = serialized.shadowCascade2SplitProp.floatValue;
 
             float lastCascadePartitionSplit = 0;
             for (int i = 0; i < cascadeCount - 1; ++i)
@@ -543,19 +547,29 @@ namespace UnityEditor.Rendering.Universal
             ShadowCascadeGUI.DrawCascades(ref cascades, useMetric, baseMetric);
             if (EditorGUI.EndChangeCheck())
             {
-                if (cascadeCount == 4)
-                    serialized.shadowCascade4SplitProp.vector3Value = new Vector3(
-                        cascades[0].size,
-                        cascades[0].size + cascades[1].size,
-                        cascades[0].size + cascades[1].size + cascades[2].size
-                    );
-                else if (cascadeCount == 3)
-                    serialized.shadowCascade3SplitProp.vector2Value = new Vector2(
-                        cascades[0].size,
-                        cascades[0].size + cascades[1].size
-                    );
-                else if (cascadeCount == 2)
-                    serialized.shadowCascade2SplitProp.floatValue = cascades[0].size;
+                for (int i = 0; i < cascadeCount - 1; ++i)
+                {
+                    shadowCascadeSplit[i] = cascades[i].size + (i == 0 ? 0 : shadowCascadeSplit[i - 1]);
+                }
+
+                for (int i = 0; i < arraySize; i++)
+                {
+                    serialized.shadowCascadeSplitsProp.GetArrayElementAtIndex(i).floatValue = shadowCascadeSplit[i];
+                }
+
+                // if (cascadeCount == 4)
+                //     serialized.shadowCascade4SplitProp.vector3Value = new Vector3(
+                //         cascades[0].size,
+                //         cascades[0].size + cascades[1].size,
+                //         cascades[0].size + cascades[1].size + cascades[2].size
+                //     );
+                // else if (cascadeCount == 3)
+                //     serialized.shadowCascade3SplitProp.vector2Value = new Vector2(
+                //         cascades[0].size,
+                //         cascades[0].size + cascades[1].size
+                //     );
+                // else if (cascadeCount == 2)
+                //     serialized.shadowCascade2SplitProp.floatValue = cascades[0].size;
 
                 serialized.shadowCascadeBorderProp.floatValue = cascades[lastCascade].borderSize;
             }

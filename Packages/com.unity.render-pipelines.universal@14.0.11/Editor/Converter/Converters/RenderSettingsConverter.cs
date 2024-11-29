@@ -220,8 +220,11 @@ namespace UnityEditor.Rendering.Universal
             // Shadows
             asset.shadowDistance = settings.ShadowDistance;
             asset.shadowCascadeCount = m_GraphicsTierSettings.CascadeShadows ? settings.ShadowCascadeCount : 1;
-            asset.cascade2Split = settings.CascadeSplit2;
-            asset.cascade4Split = settings.CascadeSplit4;
+            //todo:lcl
+            // asset.cascade2Split = settings.CascadeSplit2;
+            // asset.cascade4Split = settings.CascadeSplit4;
+            asset.cascadeSplits = new []{settings.CascadeSplit2, settings.CascadeSplit4.x, settings.CascadeSplit4.y, settings.CascadeSplit4.z};
+
             asset.supportsSoftShadows = settings.Shadows == ShadowQuality.All;
         }
 

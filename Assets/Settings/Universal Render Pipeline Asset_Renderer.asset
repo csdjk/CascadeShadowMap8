@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: de640fe3d0db1804a85f9fc8f5cadab6, type: 3}
-  m_Name: URP-HighFidelity-Renderer
+  m_Name: Universal Render Pipeline Asset_Renderer
   m_EditorClassIdentifier: 
   debugShaders:
     debugReplacementPS: {fileID: 4800000, guid: cf852408f2e174538bcd9b7fda1c5ae7,
@@ -57,26 +57,6 @@ MonoBehaviour:
   m_ShadowTransparentReceive: 1
   m_RenderingMode: 0
   m_DepthPrimingMode: 0
-  m_CopyDepthMode: 0
+  m_CopyDepthMode: 1
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
---- !u!114 &9078942873486979875
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2086e3e143e14a2abcd3b0dbc77a10ac, type: 3}
-  m_Name: 'Stylized Water 2: Stylized Water 2'
-  m_EditorClassIdentifier: 
-  m_Active: 1
-  screenSpaceReflectionSettings:
-    enable: 0
-  directionalCaustics: 0
-  displacementPrePassSettings:
-    enable: 0
-    range: 500
-    cellSize: 0.25

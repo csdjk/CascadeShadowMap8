@@ -1440,7 +1440,7 @@ namespace UnityEngine.Rendering.Universal
             shadowData.mainLightShadowCascadesCount = SystemInfo.graphicsDeviceType == GraphicsDeviceType.OpenGLES2 ? 1 : settings.shadowCascadeCount;
             shadowData.mainLightShadowmapWidth = settings.mainLightShadowmapResolution;
             shadowData.mainLightShadowmapHeight = settings.mainLightShadowmapResolution;
-
+            //todo:lcl
             switch (shadowData.mainLightShadowCascadesCount)
             {
                 case 1:
@@ -1448,15 +1448,18 @@ namespace UnityEngine.Rendering.Universal
                     break;
 
                 case 2:
-                    shadowData.mainLightShadowCascadesSplit = new Vector3(settings.cascade2Split, 1.0f, 0.0f);
+                    // shadowData.mainLightShadowCascadesSplit = new Vector3(settings.cascade2Split, 1.0f, 0.0f);
+                    shadowData.mainLightShadowCascadesSplit = new Vector3(settings.cascadeSplits[0], 1.0f, 0.0f);
                     break;
 
                 case 3:
-                    shadowData.mainLightShadowCascadesSplit = new Vector3(settings.cascade3Split.x, settings.cascade3Split.y, 0.0f);
+                    // shadowData.mainLightShadowCascadesSplit = new Vector3(settings.cascade3Split.x, settings.cascade3Split.y, 0.0f);
+                    shadowData.mainLightShadowCascadesSplit = new Vector3(settings.cascadeSplits[0], settings.cascadeSplits[1], 0.0f);
                     break;
 
                 default:
-                    shadowData.mainLightShadowCascadesSplit = settings.cascade4Split;
+                    // shadowData.mainLightShadowCascadesSplit = settings.cascade4Split;
+                    shadowData.mainLightShadowCascadesSplit = new Vector3(settings.cascadeSplits[0], settings.cascadeSplits[1], settings.cascadeSplits[2]);
                     break;
             }
 

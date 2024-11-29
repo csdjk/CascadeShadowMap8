@@ -21,12 +21,17 @@ namespace UnityEditor.Rendering
         private const float kLODSliderRangeModifier = 0.78824f;
 
         // Keep in sync with the ones in Debug.hlsl
+        //todo:lcl
         private static readonly Color[] kCascadeColors =
         {
             new Color(0.5f, 0.5f, 0.7f, 1.0f),
             new Color(0.5f, 0.7f, 0.5f, 1.0f),
             new Color(0.7f, 0.7f, 0.5f, 1.0f),
             new Color(0.7f, 0.5f, 0.5f, 1.0f),
+            new Color(0.5f, 0.5f, 0.9f, 1.0f),
+            new Color(0.5f, 0.9f, 0.5f, 1.0f),
+            new Color(0.9f, 0.9f, 0.5f, 1.0f),
+            new Color(0.9f, 0.5f, 0.5f, 1.0f)
         };
         private static readonly Color kDisabledColor = new Color(0.5f, 0.5f, 0.5f, 0.4f); //Works with both personal and pro skin
 
