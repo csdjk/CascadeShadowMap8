@@ -9,6 +9,7 @@ namespace UnityEngine.Rendering.Universal.Internal
     /// </summary>
     public class MainLightShadowCasterPass : ScriptableRenderPass
     {
+        //todo:lcl
         private static class MainLightShadowConstantBuffer
         {
             public static int _WorldToShadow;
@@ -18,12 +19,20 @@ namespace UnityEngine.Rendering.Universal.Internal
             public static int _CascadeShadowSplitSpheres2;
             public static int _CascadeShadowSplitSpheres3;
             public static int _CascadeShadowSplitSphereRadii;
+
+            public static int _CascadeShadowSplitSpheres4;
+            public static int _CascadeShadowSplitSpheres5;
+            public static int _CascadeShadowSplitSpheres6;
+            public static int _CascadeShadowSplitSpheres7;
+            public static int _CascadeShadowSplitSphereRadii2;
+
             public static int _ShadowOffset0;
             public static int _ShadowOffset1;
             public static int _ShadowmapSize;
         }
 
-        const int k_MaxCascades = 4;
+        // const int k_MaxCascades = 4;
+        const int k_MaxCascades = 8;
         const int k_ShadowmapBufferBits = 16;
         float m_CascadeBorder;
         float m_MaxShadowDistanceSq;
@@ -70,6 +79,13 @@ namespace UnityEngine.Rendering.Universal.Internal
             MainLightShadowConstantBuffer._CascadeShadowSplitSpheres2 = Shader.PropertyToID("_CascadeShadowSplitSpheres2");
             MainLightShadowConstantBuffer._CascadeShadowSplitSpheres3 = Shader.PropertyToID("_CascadeShadowSplitSpheres3");
             MainLightShadowConstantBuffer._CascadeShadowSplitSphereRadii = Shader.PropertyToID("_CascadeShadowSplitSphereRadii");
+
+            MainLightShadowConstantBuffer._CascadeShadowSplitSpheres4 = Shader.PropertyToID("_CascadeShadowSplitSpheres4");
+            MainLightShadowConstantBuffer._CascadeShadowSplitSpheres5 = Shader.PropertyToID("_CascadeShadowSplitSpheres5");
+            MainLightShadowConstantBuffer._CascadeShadowSplitSpheres6 = Shader.PropertyToID("_CascadeShadowSplitSpheres6");
+            MainLightShadowConstantBuffer._CascadeShadowSplitSpheres7 = Shader.PropertyToID("_CascadeShadowSplitSpheres7");
+            MainLightShadowConstantBuffer._CascadeShadowSplitSphereRadii2 = Shader.PropertyToID("_CascadeShadowSplitSphereRadii2");
+
             MainLightShadowConstantBuffer._ShadowOffset0 = Shader.PropertyToID("_MainLightShadowOffset0");
             MainLightShadowConstantBuffer._ShadowOffset1 = Shader.PropertyToID("_MainLightShadowOffset1");
             MainLightShadowConstantBuffer._ShadowmapSize = Shader.PropertyToID("_MainLightShadowmapSize");
@@ -125,14 +141,19 @@ namespace UnityEngine.Rendering.Universal.Internal
 
             int shadowResolution = ShadowUtils.GetMaxTileResolutionInAtlas(renderingData.shadowData.mainLightShadowmapWidth,
                 renderingData.shadowData.mainLightShadowmapHeight, m_ShadowCasterCascadesCount);
-            renderTargetWidth = renderingData.shadowData.mainLightShadowmapWidth;
-            renderTargetHeight = (m_ShadowCasterCascadesCount == 2) ?
-                renderingData.shadowData.mainLightShadowmapHeight >> 1 :
-                renderingData.shadowData.mainLightShadowmapHeight;
+            // renderTargetWidth = renderingData.shadowData.mainLightShadowmapWidth;
+            // renderTargetHeight = (m_ShadowCasterCascadesCount == 2) ?
+            //     renderingData.shadowData.mainLightShadowmapHeight >> 1 :
+            //     renderingData.shadowData.mainLightShadowmapHeight;
+            //todo:lcl
+            renderTargetWidth = m_ShadowCasterCascadesCount > 4 ? renderingData.shadowData.mainLightShadowmapWidth >> 1 : renderingData.shadowData.mainLightShadowmapWidth;
+            renderTargetHeight = m_ShadowCasterCascadesCount == 2 ? renderingData.shadowData.mainLightShadowmapHeight >> 1 : renderingData.shadowData.mainLightShadowmapHeight;
+            renderTargetHeight = m_ShadowCasterCascadesCount == 5 || m_ShadowCasterCascadesCount == 6 ? renderingData.shadowData.mainLightShadowmapHeight * 3/4 : renderingData.shadowData.mainLightShadowmapHeight;
 
             for (int cascadeIndex = 0; cascadeIndex < m_ShadowCasterCascadesCount; ++cascadeIndex)
             {
                 bool success = ShadowUtils.ExtractDirectionalLightMatrix(ref renderingData.cullResults, ref renderingData.shadowData,
+                    renderingData.lightData,renderingData.cameraData,
                     shadowLightIndex, cascadeIndex, renderTargetWidth, renderTargetHeight, shadowResolution, light.shadowNearPlane,
                     out m_CascadeSplitDistances[cascadeIndex], out m_CascadeSlices[cascadeIndex]);
 
@@ -297,11 +318,26 @@ namespace UnityEngine.Rendering.Universal.Internal
                     m_CascadeSplitDistances[2]);
                 cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSpheres3,
                     m_CascadeSplitDistances[3]);
+                cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSpheres4,
+                    m_CascadeSplitDistances[4]);
+                cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSpheres5,
+                    m_CascadeSplitDistances[5]);
+                cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSpheres6,
+                    m_CascadeSplitDistances[6]);
+                cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSpheres7,
+                    m_CascadeSplitDistances[7]);
+
                 cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSphereRadii, new Vector4(
                     m_CascadeSplitDistances[0].w * m_CascadeSplitDistances[0].w,
                     m_CascadeSplitDistances[1].w * m_CascadeSplitDistances[1].w,
                     m_CascadeSplitDistances[2].w * m_CascadeSplitDistances[2].w,
                     m_CascadeSplitDistances[3].w * m_CascadeSplitDistances[3].w));
+                cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSphereRadii2, new Vector4(
+                    m_CascadeSplitDistances[4].w * m_CascadeSplitDistances[4].w,
+                    m_CascadeSplitDistances[5].w * m_CascadeSplitDistances[5].w,
+                    m_CascadeSplitDistances[6].w * m_CascadeSplitDistances[6].w,
+                    m_CascadeSplitDistances[7].w * m_CascadeSplitDistances[7].w));
+
             }
 
             // Inside shader soft shadows are controlled through global keyword.

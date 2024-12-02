@@ -791,6 +791,9 @@ namespace UnityEngine.Rendering.Universal
         /// The split between cascades.
         /// </summary>
         public Vector3 mainLightShadowCascadesSplit;
+        public Vector4 mainLightShadowCascadesSplit2;
+        //todo:lcl
+        // public float[] mainLightShadowCascadesSplit;
 
         /// <summary>
         /// Main light last cascade shadow fade border.
@@ -841,6 +844,7 @@ namespace UnityEngine.Rendering.Universal
 
         internal bool isKeywordAdditionalLightShadowsEnabled;
         internal bool isKeywordSoftShadowsEnabled;
+
     }
 
     /// <summary>

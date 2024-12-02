@@ -85,12 +85,145 @@ namespace UnityEngine.Rendering.Universal
         /// <param name="viewMatrix"></param>
         /// <param name="projMatrix"></param>
         /// <returns></returns>
-        public static bool ExtractDirectionalLightMatrix(ref CullingResults cullResults, ref ShadowData shadowData, int shadowLightIndex, int cascadeIndex, int shadowmapWidth, int shadowmapHeight, int shadowResolution, float shadowNearPlane, out Vector4 cascadeSplitDistance, out ShadowSliceData shadowSliceData, out Matrix4x4 viewMatrix, out Matrix4x4 projMatrix)
+        public static bool ExtractDirectionalLightMatrix(ref CullingResults cullResults, ref ShadowData shadowData,LightData lightData,CameraData cameraData,
+            int shadowLightIndex, int cascadeIndex, int shadowmapWidth, int shadowmapHeight, int shadowResolution, float shadowNearPlane, out Vector4 cascadeSplitDistance, out ShadowSliceData shadowSliceData, out Matrix4x4 viewMatrix, out Matrix4x4 projMatrix)
         {
-            bool result = ExtractDirectionalLightMatrix(ref cullResults, ref shadowData, shadowLightIndex, cascadeIndex, shadowmapWidth, shadowmapHeight, shadowResolution, shadowNearPlane, out cascadeSplitDistance, out shadowSliceData);
+            bool result = ExtractDirectionalLightMatrix(ref cullResults, ref shadowData,lightData,cameraData, shadowLightIndex, cascadeIndex, shadowmapWidth, shadowmapHeight, shadowResolution, shadowNearPlane, out cascadeSplitDistance, out shadowSliceData);
             viewMatrix = shadowSliceData.viewMatrix;
             projMatrix = shadowSliceData.projectionMatrix;
             return result;
+        }
+
+        public static bool CalculateDirectionalLightShadowSliceData(LightData lightData,CameraData cameraData,ShadowData shadowData,
+            int cascadeIndex, int shadowResolution, int shadowLightIndex, out ShadowSliceData shadowSliceData)
+        {
+            // 初始化阴影切片数据
+            shadowSliceData = default;
+            // 阴影切片的尺寸
+            float delta = 0;
+            // 获取主光源
+            Light mainLight = lightData.visibleLights[shadowLightIndex].light;
+            // 渲染相机
+            Camera mainCamera = cameraData.camera;
+
+            // 检查是否有主相机
+            if (mainCamera == null)
+            {
+                Debug.LogWarning("没有主相机");
+                return false;
+            }
+
+            // 初始化球形包围体参数
+            Vector4 cullingSphere = Vector4.zero;
+            Vector3 sphereCenter = Vector3.zero;
+            float sphereRadius = 0;
+            float nearPlane = mainCamera.nearClipPlane;
+            float farPlane = mainCamera.farClipPlane;
+            float shadowMaxDistance = Mathf.Min(farPlane, UniversalRenderPipeline.asset.shadowDistance);
+            farPlane = shadowMaxDistance;
+
+            // 根据级联索引设置近裁剪面和远裁剪面
+            switch (cascadeIndex)
+            {
+                case 0:
+                    break;
+                case 1:
+                    nearPlane = shadowData.mainLightShadowCascadesSplit[0] * shadowMaxDistance;
+                    break;
+                case 2:
+                    nearPlane = shadowData.mainLightShadowCascadesSplit[1] * shadowMaxDistance;
+                    break;
+                case 3:
+                    nearPlane = shadowData.mainLightShadowCascadesSplit[2] * shadowMaxDistance;
+                    break;
+                case 4:
+                    nearPlane = shadowData.mainLightShadowCascadesSplit2[0] * shadowMaxDistance;
+                    break;
+                case 5:
+                    nearPlane = shadowData.mainLightShadowCascadesSplit2[1] * shadowMaxDistance;
+                    break;
+                case 6:
+                    nearPlane = shadowData.mainLightShadowCascadesSplit2[2] * shadowMaxDistance;
+                    break;
+                case 7:
+                    nearPlane = shadowData.mainLightShadowCascadesSplit2[3] * shadowMaxDistance;
+                    break;
+            }
+
+            if (cascadeIndex < shadowData.mainLightShadowCascadesCount - 1)
+            {
+                if (cascadeIndex < 3)
+                {
+                    farPlane = shadowData.mainLightShadowCascadesSplit[cascadeIndex] * shadowMaxDistance;
+                }
+                else if (cascadeIndex < 7)
+                {
+                    int index = cascadeIndex - 3;
+                    farPlane = shadowData.mainLightShadowCascadesSplit2[index] * shadowMaxDistance;
+                }
+            }
+
+            // 计算相机视锥体的宽高比和对角线长度
+            float cameraWidth = Mathf.Tan(Mathf.Deg2Rad * mainCamera.fieldOfView / 2) * nearPlane * 2;
+            float cameraHeight = cameraWidth * Screen.width / Screen.height;
+            float k = Mathf.Sqrt(1 + (cameraHeight * cameraHeight) / (cameraWidth * cameraWidth)) * Mathf.Tan(mainCamera.fieldOfView * Mathf.Deg2Rad / 2);
+            float k2 = k * k;
+
+            // 根据视锥体参数计算球形包围体的中心点和半径
+            if (k2 >= (farPlane - nearPlane) / (farPlane + nearPlane))
+            {
+                sphereCenter = farPlane * mainCamera.transform.forward + mainCamera.transform.position;
+                sphereRadius = farPlane * k;
+            }
+            else
+            {
+                sphereCenter = 0.5f * (farPlane + nearPlane) * (1 + k2) * mainCamera.transform.forward + mainCamera.transform.position;
+                sphereRadius = 0.5f * Mathf.Sqrt((farPlane - nearPlane) * (farPlane - nearPlane) + 2 * (farPlane * farPlane + nearPlane * nearPlane) * k2 + (farPlane + nearPlane) * (farPlane + nearPlane) * k2 * k2);
+            }
+
+            // 计算阴影切片尺寸
+            delta = 2.0f * sphereRadius / shadowResolution;
+            Vector3 sphereCenterSnappedOS = mainLight.transform.worldToLocalMatrix.MultiplyVector(sphereCenter);
+            sphereCenterSnappedOS.x /= delta;
+            sphereCenterSnappedOS.x = Mathf.Floor(sphereCenterSnappedOS.x);
+            sphereCenterSnappedOS.x *= delta;
+            sphereCenterSnappedOS.y /= delta;
+            sphereCenterSnappedOS.y = Mathf.Floor(sphereCenterSnappedOS.y);
+            sphereCenterSnappedOS.y *= delta;
+            sphereCenter = mainLight.transform.localToWorldMatrix.MultiplyVector(sphereCenterSnappedOS);
+
+            // 构建观察矩阵
+            Matrix4x4 viewMatrix = Matrix4x4.identity;
+            viewMatrix.m00 = mainLight.transform.right.x;
+            viewMatrix.m01 = mainLight.transform.right.y;
+            viewMatrix.m02 = mainLight.transform.right.z;
+            viewMatrix.m10 = mainLight.transform.up.x;
+            viewMatrix.m11 = mainLight.transform.up.y;
+            viewMatrix.m12 = mainLight.transform.up.z;
+            viewMatrix.m20 = -mainLight.transform.forward.x;
+            viewMatrix.m21 = -mainLight.transform.forward.y;
+            viewMatrix.m22 = -mainLight.transform.forward.z;
+            viewMatrix.m03 = -Vector3.Dot(mainLight.transform.right, sphereCenter);
+            viewMatrix.m13 = -Vector3.Dot(mainLight.transform.up, sphereCenter);
+            viewMatrix.m23 = Vector3.Dot(mainLight.transform.forward, sphereCenter);
+
+            // 构建投影矩阵
+            Matrix4x4 projectionMatrix = Matrix4x4.identity;
+            projectionMatrix.m00 = 1.0f / sphereRadius;
+            projectionMatrix.m11 = 1.0f / sphereRadius;
+            projectionMatrix.m22 = -2.0f / (sphereRadius - (-sphereRadius));
+            projectionMatrix.m23 = -(sphereRadius + (-sphereRadius)) / (sphereRadius - (-sphereRadius));
+            projectionMatrix.m33 = 1;
+
+            // 设置球形包围体数据
+            cullingSphere = new Vector4(sphereCenter.x, sphereCenter.y, sphereCenter.z, sphereRadius);
+
+            // 更新阴影切片数据
+            shadowSliceData.viewMatrix = viewMatrix;
+            shadowSliceData.projectionMatrix = projectionMatrix;
+            shadowSliceData.splitData.cullingSphere = cullingSphere;
+
+            return true;
         }
 
         /// <summary>
@@ -107,17 +240,31 @@ namespace UnityEngine.Rendering.Universal
         /// <param name="cascadeSplitDistance"></param>
         /// <param name="shadowSliceData"></param>
         /// <returns></returns>
-        public static bool ExtractDirectionalLightMatrix(ref CullingResults cullResults, ref ShadowData shadowData, int shadowLightIndex, int cascadeIndex, int shadowmapWidth, int shadowmapHeight, int shadowResolution, float shadowNearPlane, out Vector4 cascadeSplitDistance, out ShadowSliceData shadowSliceData)
+        public static bool ExtractDirectionalLightMatrix(ref CullingResults cullResults, ref ShadowData shadowData,LightData lightData,CameraData cameraData,
+            int shadowLightIndex, int cascadeIndex, int shadowmapWidth, int shadowmapHeight, int shadowResolution, float shadowNearPlane,
+            out Vector4 cascadeSplitDistance, out ShadowSliceData shadowSliceData)
         {
-            bool success = cullResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(shadowLightIndex,
-                cascadeIndex, shadowData.mainLightShadowCascadesCount, shadowData.mainLightShadowCascadesSplit, shadowResolution, shadowNearPlane, out shadowSliceData.viewMatrix, out shadowSliceData.projectionMatrix,
-                out shadowSliceData.splitData);
+            // bool success = cullResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(shadowLightIndex,
+            //     cascadeIndex, shadowData.mainLightShadowCascadesCount, shadowData.mainLightShadowCascadesSplit, shadowResolution,
+            //     shadowNearPlane, out shadowSliceData.viewMatrix, out shadowSliceData.projectionMatrix,
+            //     out shadowSliceData.splitData);
+
+            bool success = CalculateDirectionalLightShadowSliceData(lightData, cameraData, shadowData, cascadeIndex, shadowResolution, shadowLightIndex,
+            out shadowSliceData);
 
             cascadeSplitDistance = shadowSliceData.splitData.cullingSphere;
             shadowSliceData.offsetX = (cascadeIndex % 2) * shadowResolution;
             shadowSliceData.offsetY = (cascadeIndex / 2) * shadowResolution;
             shadowSliceData.resolution = shadowResolution;
             shadowSliceData.shadowTransform = GetShadowTransform(shadowSliceData.projectionMatrix, shadowSliceData.viewMatrix);
+
+            Debug.Log("shadowSliceData.shadowTransform: " + shadowSliceData.shadowTransform);
+            Debug.Log("shadowSliceData.viewMatrix: " + shadowSliceData.viewMatrix);
+            Debug.Log("shadowSliceData.projectionMatrix: " + shadowSliceData.projectionMatrix);
+            Debug.Log("shadowSliceData.splitData.cullingSphere: " + shadowSliceData.splitData.cullingSphere);
+            Debug.Log("shadowSliceData.offsetX: " + shadowSliceData.offsetX);
+            Debug.Log("shadowSliceData.offsetY: " + shadowSliceData.offsetY);
+            Debug.Log("shadowSliceData.resolution: " + shadowSliceData.resolution);
 
             // It is the culling sphere radius multiplier for shadow cascade blending
             // If this is less than 1.0, then it will begin to cull castors across cascades

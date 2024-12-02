@@ -66,7 +66,12 @@ float4      _CascadeShadowSplitSpheres0;
 float4      _CascadeShadowSplitSpheres1;
 float4      _CascadeShadowSplitSpheres2;
 float4      _CascadeShadowSplitSpheres3;
+float4      _CascadeShadowSplitSpheres4;
+float4      _CascadeShadowSplitSpheres5;
+float4      _CascadeShadowSplitSpheres6;
+float4      _CascadeShadowSplitSpheres7;
 float4      _CascadeShadowSplitSphereRadii;
+float4      _CascadeShadowSplitSphereRadii2;
 
 float4      _MainLightShadowOffset0; // xy: offset0, zw: offset1
 float4      _MainLightShadowOffset1; // xy: offset2, zw: offset3
@@ -301,19 +306,36 @@ real SampleShadowmap(TEXTURE2D_SHADOW_PARAM(ShadowMap, sampler_ShadowMap), float
     // TODO: We could use branch here to save some perf on some platforms.
     return BEYOND_SHADOW_FAR(shadowCoord) ? 1.0 : attenuation;
 }
-
+//todo:lcl
 half ComputeCascadeIndex(float3 positionWS)
 {
     float3 fromCenter0 = positionWS - _CascadeShadowSplitSpheres0.xyz;
     float3 fromCenter1 = positionWS - _CascadeShadowSplitSpheres1.xyz;
     float3 fromCenter2 = positionWS - _CascadeShadowSplitSpheres2.xyz;
     float3 fromCenter3 = positionWS - _CascadeShadowSplitSpheres3.xyz;
+    float3 fromCenter4 = positionWS - _CascadeShadowSplitSpheres4.xyz;
+    float3 fromCenter5 = positionWS - _CascadeShadowSplitSpheres5.xyz;
+    float3 fromCenter6 = positionWS - _CascadeShadowSplitSpheres6.xyz;
+    float3 fromCenter7 = positionWS - _CascadeShadowSplitSpheres7.xyz;
     float4 distances2 = float4(dot(fromCenter0, fromCenter0), dot(fromCenter1, fromCenter1), dot(fromCenter2, fromCenter2), dot(fromCenter3, fromCenter3));
+    float4 distancesFar2 = float4(dot(fromCenter4, fromCenter4), dot(fromCenter5, fromCenter5), dot(fromCenter6, fromCenter6), dot(fromCenter7, fromCenter7));
 
     half4 weights = half4(distances2 < _CascadeShadowSplitSphereRadii);
-    weights.yzw = saturate(weights.yzw - weights.xyz);
+    half4 weightsFar = half4(distancesFar2 < _CascadeShadowSplitSphereRadii2);
+    // weights.yzw = saturate(weights.yzw - weights.xyz);
+    // return half(4.0) - dot(weights, half4(4, 3, 2, 1));
 
-    return half(4.0) - dot(weights, half4(4, 3, 2, 1));
+    half4 origWeights = weights;
+    half4 origWeightsFar = weightsFar;
+    weights.yzw = saturate(weights.yzw - weights.xyz);
+    weightsFar.x = saturate(weightsFar.x - origWeights.w);
+    weightsFar.yzw = saturate(weightsFar.yzw - origWeightsFar.xyz);
+
+    half nearWeight = dot(weights, half4(8, 7, 6, 5));
+    half farWeight = dot(weightsFar, half4(4, 3, 2, 1));
+
+    half index = half(8.0) - lerp(nearWeight, farWeight, step(nearWeight, 1));
+    return index;
 }
 
 float4 TransformWorldToShadowCoord(float3 positionWS)
@@ -325,8 +347,8 @@ float4 TransformWorldToShadowCoord(float3 positionWS)
 #endif
 
     float4 shadowCoord = mul(_MainLightWorldToShadow[cascadeIndex], float4(positionWS, 1.0));
-
-    return float4(shadowCoord.xyz, 0);
+    //todo:lcl
+    return float4(shadowCoord.xyz, 0.0);
 }
 
 half MainLightRealtimeShadow(float4 shadowCoord)

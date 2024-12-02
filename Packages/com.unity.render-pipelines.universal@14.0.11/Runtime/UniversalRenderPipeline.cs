@@ -1388,7 +1388,8 @@ namespace UnityEngine.Rendering.Universal
             CheckAndApplyDebugSettings(ref renderingData);
         }
 
-        static void InitializeShadowData(UniversalRenderPipelineAsset settings, NativeArray<VisibleLight> visibleLights, bool mainLightCastShadows, bool additionalLightsCastShadows, bool isForwardPlus, out ShadowData shadowData)
+        static void InitializeShadowData(UniversalRenderPipelineAsset settings, NativeArray<VisibleLight> visibleLights, bool mainLightCastShadows,
+            bool additionalLightsCastShadows, bool isForwardPlus, out ShadowData shadowData)
         {
             using var profScope = new ProfilingScope(null, Profiling.Pipeline.initializeShadowData);
 
@@ -1440,26 +1441,38 @@ namespace UnityEngine.Rendering.Universal
             shadowData.mainLightShadowCascadesCount = SystemInfo.graphicsDeviceType == GraphicsDeviceType.OpenGLES2 ? 1 : settings.shadowCascadeCount;
             shadowData.mainLightShadowmapWidth = settings.mainLightShadowmapResolution;
             shadowData.mainLightShadowmapHeight = settings.mainLightShadowmapResolution;
+
             //todo:lcl
+            shadowData.mainLightShadowCascadesSplit2 = Vector4.zero;
             switch (shadowData.mainLightShadowCascadesCount)
             {
                 case 1:
                     shadowData.mainLightShadowCascadesSplit = new Vector3(1.0f, 0.0f, 0.0f);
                     break;
-
                 case 2:
-                    // shadowData.mainLightShadowCascadesSplit = new Vector3(settings.cascade2Split, 1.0f, 0.0f);
                     shadowData.mainLightShadowCascadesSplit = new Vector3(settings.cascadeSplits[0], 1.0f, 0.0f);
                     break;
-
                 case 3:
-                    // shadowData.mainLightShadowCascadesSplit = new Vector3(settings.cascade3Split.x, settings.cascade3Split.y, 0.0f);
                     shadowData.mainLightShadowCascadesSplit = new Vector3(settings.cascadeSplits[0], settings.cascadeSplits[1], 0.0f);
                     break;
-
-                default:
-                    // shadowData.mainLightShadowCascadesSplit = settings.cascade4Split;
+                case 4:
                     shadowData.mainLightShadowCascadesSplit = new Vector3(settings.cascadeSplits[0], settings.cascadeSplits[1], settings.cascadeSplits[2]);
+                    break;
+                case 5:
+                    shadowData.mainLightShadowCascadesSplit = new Vector3(settings.cascadeSplits[0], settings.cascadeSplits[1], settings.cascadeSplits[2]);
+                    shadowData.mainLightShadowCascadesSplit2 = new Vector4(settings.cascadeSplits[3], 0.0f, 0.0f, 0.0f);
+                    break;
+                case 6:
+                    shadowData.mainLightShadowCascadesSplit = new Vector3(settings.cascadeSplits[0], settings.cascadeSplits[1], settings.cascadeSplits[2]);
+                    shadowData.mainLightShadowCascadesSplit2 = new Vector4(settings.cascadeSplits[3], settings.cascadeSplits[4], 0.0f, 0.0f);
+                    break;
+                case 7:
+                    shadowData.mainLightShadowCascadesSplit = new Vector3(settings.cascadeSplits[0], settings.cascadeSplits[1], settings.cascadeSplits[2]);
+                    shadowData.mainLightShadowCascadesSplit2 = new Vector4(settings.cascadeSplits[3], settings.cascadeSplits[4], settings.cascadeSplits[5], 0.0f);
+                    break;
+                default:
+                    shadowData.mainLightShadowCascadesSplit = new Vector3(settings.cascadeSplits[0], settings.cascadeSplits[1], settings.cascadeSplits[2]);
+                    shadowData.mainLightShadowCascadesSplit2 = new Vector4(settings.cascadeSplits[3], settings.cascadeSplits[4], settings.cascadeSplits[5], settings.cascadeSplits[6]);
                     break;
             }
 
