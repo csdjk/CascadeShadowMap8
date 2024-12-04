@@ -319,7 +319,7 @@ half ComputeCascadeIndex(float3 positionWS)
     float3 fromCenter7 = positionWS - _CascadeShadowSplitSpheres7.xyz;
     float4 distances2 = float4(dot(fromCenter0, fromCenter0), dot(fromCenter1, fromCenter1), dot(fromCenter2, fromCenter2), dot(fromCenter3, fromCenter3));
     float4 distancesFar2 = float4(dot(fromCenter4, fromCenter4), dot(fromCenter5, fromCenter5), dot(fromCenter6, fromCenter6), dot(fromCenter7, fromCenter7));
-
+    //
     half4 weights = half4(distances2 < _CascadeShadowSplitSphereRadii);
     half4 weightsFar = half4(distancesFar2 < _CascadeShadowSplitSphereRadii2);
     // weights.yzw = saturate(weights.yzw - weights.xyz);

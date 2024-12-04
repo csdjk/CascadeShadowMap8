@@ -97,16 +97,11 @@ namespace UnityEngine.Rendering.Universal
         public static bool CalculateDirectionalLightShadowSliceData(LightData lightData,CameraData cameraData,ShadowData shadowData,
             int cascadeIndex, int shadowResolution, int shadowLightIndex, out ShadowSliceData shadowSliceData)
         {
-            // 初始化阴影切片数据
             shadowSliceData = default;
             // 阴影切片的尺寸
             float delta = 0;
-            // 获取主光源
             Light mainLight = lightData.visibleLights[shadowLightIndex].light;
-            // 渲染相机
             Camera mainCamera = cameraData.camera;
-
-            // 检查是否有主相机
             if (mainCamera == null)
             {
                 Debug.LogWarning("没有主相机");
@@ -181,7 +176,7 @@ namespace UnityEngine.Rendering.Universal
                 sphereRadius = 0.5f * Mathf.Sqrt((farPlane - nearPlane) * (farPlane - nearPlane) + 2 * (farPlane * farPlane + nearPlane * nearPlane) * k2 + (farPlane + nearPlane) * (farPlane + nearPlane) * k2 * k2);
             }
 
-            // 计算阴影切片尺寸
+            // 减少阴影贴图中的抖动
             delta = 2.0f * sphereRadius / shadowResolution;
             Vector3 sphereCenterSnappedOS = mainLight.transform.worldToLocalMatrix.MultiplyVector(sphereCenter);
             sphereCenterSnappedOS.x /= delta;
@@ -248,7 +243,7 @@ namespace UnityEngine.Rendering.Universal
             //     cascadeIndex, shadowData.mainLightShadowCascadesCount, shadowData.mainLightShadowCascadesSplit, shadowResolution,
             //     shadowNearPlane, out shadowSliceData.viewMatrix, out shadowSliceData.projectionMatrix,
             //     out shadowSliceData.splitData);
-
+            //
             bool success = CalculateDirectionalLightShadowSliceData(lightData, cameraData, shadowData, cascadeIndex, shadowResolution, shadowLightIndex,
             out shadowSliceData);
 
@@ -258,13 +253,13 @@ namespace UnityEngine.Rendering.Universal
             shadowSliceData.resolution = shadowResolution;
             shadowSliceData.shadowTransform = GetShadowTransform(shadowSliceData.projectionMatrix, shadowSliceData.viewMatrix);
 
-            Debug.Log("shadowSliceData.shadowTransform: " + shadowSliceData.shadowTransform);
-            Debug.Log("shadowSliceData.viewMatrix: " + shadowSliceData.viewMatrix);
-            Debug.Log("shadowSliceData.projectionMatrix: " + shadowSliceData.projectionMatrix);
-            Debug.Log("shadowSliceData.splitData.cullingSphere: " + shadowSliceData.splitData.cullingSphere);
-            Debug.Log("shadowSliceData.offsetX: " + shadowSliceData.offsetX);
-            Debug.Log("shadowSliceData.offsetY: " + shadowSliceData.offsetY);
-            Debug.Log("shadowSliceData.resolution: " + shadowSliceData.resolution);
+            // Debug.Log("shadowSliceData.shadowTransform: " + shadowSliceData.shadowTransform);
+            // Debug.Log("shadowSliceData.viewMatrix: " + shadowSliceData.viewMatrix);
+            // Debug.Log("shadowSliceData.projectionMatrix: " + shadowSliceData.projectionMatrix);
+            // Debug.Log("shadowSliceData.splitData.cullingSphere: " + shadowSliceData.splitData.cullingSphere);
+            // Debug.Log("shadowSliceData.offsetX: " + shadowSliceData.offsetX);
+            // Debug.Log("shadowSliceData.offsetY: " + shadowSliceData.offsetY);
+            // Debug.Log("shadowSliceData.resolution: " + shadowSliceData.resolution);
 
             // It is the culling sphere radius multiplier for shadow cascade blending
             // If this is less than 1.0, then it will begin to cull castors across cascades

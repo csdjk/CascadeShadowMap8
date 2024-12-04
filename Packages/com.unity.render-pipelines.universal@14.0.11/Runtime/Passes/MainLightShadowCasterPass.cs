@@ -91,13 +91,93 @@ namespace UnityEngine.Rendering.Universal.Internal
             MainLightShadowConstantBuffer._ShadowmapSize = Shader.PropertyToID("_MainLightShadowmapSize");
 
             m_MainLightShadowmapID = Shader.PropertyToID(k_MainLightShadowMapTextureName);
+#if UNITY_EDITOR
+            UnityEditor.SceneView.duringSceneGui -= OnSceneGUI;
+            UnityEditor.SceneView.duringSceneGui += OnSceneGUI;
+#endif
         }
+
+#if UNITY_EDITOR
+        /// <summary>
+        ///   Draw a wire sphere
+        /// </summary>
+        public static void DrawWireSphere(Vector3 center, float radius, Color color, int quality = 3)
+        {
+            quality = Mathf.Clamp(quality, 1, 10);
+
+            int segments = quality << 2;
+            int subdivisions = quality << 3;
+            int halfSegments = segments >> 1;
+            float strideAngle = 360F / subdivisions;
+            float segmentStride = 180F / segments;
+
+            UnityEditor.Handles.color = color;
+
+            Vector3 first;
+            Vector3 next;
+            for (int i = 0; i < segments; i++)
+            {
+                first = (Vector3.forward * radius);
+                first = Quaternion.AngleAxis(segmentStride * (i - halfSegments), Vector3.right) * first;
+
+                for (int j = 0; j < subdivisions; j++)
+                {
+                    next = Quaternion.AngleAxis(strideAngle, Vector3.up) * first;
+                    UnityEditor.Handles.DrawLine(first + center, next + center);
+                    first = next;
+                }
+            }
+
+            Vector3 axis;
+            for (int i = 0; i < segments; i++)
+            {
+                first = (Vector3.forward * radius);
+                first = Quaternion.AngleAxis(segmentStride * (i - halfSegments), Vector3.up) * first;
+                axis = Quaternion.AngleAxis(90F, Vector3.up) * first;
+
+                for (int j = 0; j < subdivisions; j++)
+                {
+                    next = Quaternion.AngleAxis(strideAngle, axis) * first;
+                    UnityEditor.Handles.DrawLine(first + center, next + center);
+                    first = next;
+                }
+            }
+        }
+        //todo:lcl
+        static readonly Color[] kCascadeColors =
+        {
+            new Color(0.5f, 0.5f, 0.7f, 1.0f),
+            new Color(0.5f, 0.7f, 0.5f, 1.0f),
+            new Color(0.7f, 0.7f, 0.5f, 1.0f),
+            new Color(0.7f, 0.5f, 0.5f, 1.0f),
+            new Color(0.5f, 0.5f, 0.9f, 1.0f),
+            new Color(0.5f, 0.9f, 0.5f, 1.0f),
+            new Color(0.9f, 0.9f, 0.5f, 1.0f),
+            new Color(0.9f, 0.5f, 0.5f, 1.0f)
+        };
+        static ShadowSliceData[] CascadeSlicesDebug;
+        void OnSceneGUI(UnityEditor.SceneView sceneView)
+        {
+            for (int i = 0; i < CascadeSlicesDebug.Length; i++)
+            {
+                Vector4 cullingSphere = CascadeSlicesDebug[i].splitData.cullingSphere;
+                DrawWireSphere(cullingSphere, cullingSphere.w, kCascadeColors[i]);
+                // UnityEditor.Handles.color = kCascadeColors[i];
+                // UnityEditor.Handles.DrawWireDisc(cullingSphere, Vector3.up, cullingSphere.w);
+                Debug.Log(cullingSphere);
+                return;
+            }
+        }
+#endif
 
         /// <summary>
         /// Cleans up resources used by the pass.
         /// </summary>
         public void Dispose()
         {
+#if UNITY_EDITOR
+            UnityEditor.SceneView.duringSceneGui -= OnSceneGUI;
+#endif
             m_MainLightShadowmapTexture?.Release();
             m_EmptyMainLightShadowmapTexture?.Release();
         }
@@ -167,6 +247,12 @@ namespace UnityEngine.Rendering.Universal.Internal
             useNativeRenderPass = true;
             ShadowUtils.ShadowRTReAllocateIfNeeded(ref m_MainLightShadowmapTexture, renderTargetWidth, renderTargetHeight, k_ShadowmapBufferBits, name: k_MainLightShadowMapTextureName);
 
+#if UNITY_EDITOR
+            if (renderingData.cameraData.cameraType==CameraType.Game)
+            {
+                CascadeSlicesDebug = m_CascadeSlices;
+            }
+#endif
             return true;
         }
 
