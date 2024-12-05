@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.RenderGraphModule;
 
@@ -155,17 +156,17 @@ namespace UnityEngine.Rendering.Universal.Internal
             new Color(0.9f, 0.9f, 0.5f, 1.0f),
             new Color(0.9f, 0.5f, 0.5f, 1.0f)
         };
-        static ShadowSliceData[] CascadeSlicesDebug;
+        static Vector4[] CascadeSphereDebug;
         void OnSceneGUI(UnityEditor.SceneView sceneView)
         {
-            for (int i = 0; i < CascadeSlicesDebug.Length; i++)
+            for (int i = 0; i < CascadeSphereDebug.Length; i++)
             {
-                Vector4 cullingSphere = CascadeSlicesDebug[i].splitData.cullingSphere;
+                Vector4 cullingSphere = CascadeSphereDebug[i];
                 DrawWireSphere(cullingSphere, cullingSphere.w, kCascadeColors[i]);
                 // UnityEditor.Handles.color = kCascadeColors[i];
                 // UnityEditor.Handles.DrawWireDisc(cullingSphere, Vector3.up, cullingSphere.w);
-                Debug.Log(cullingSphere);
-                return;
+                // Debug.Log(cullingSphere);
+                // return;
             }
         }
 #endif
@@ -250,7 +251,7 @@ namespace UnityEngine.Rendering.Universal.Internal
 #if UNITY_EDITOR
             if (renderingData.cameraData.cameraType==CameraType.Game)
             {
-                CascadeSlicesDebug = m_CascadeSlices;
+                CascadeSphereDebug = m_CascadeSlices.Select(x => x.splitData.cullingSphere).ToArray();
             }
 #endif
             return true;

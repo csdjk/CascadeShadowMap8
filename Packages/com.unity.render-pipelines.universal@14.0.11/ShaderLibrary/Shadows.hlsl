@@ -306,6 +306,8 @@ real SampleShadowmap(TEXTURE2D_SHADOW_PARAM(ShadowMap, sampler_ShadowMap), float
     // TODO: We could use branch here to save some perf on some platforms.
     return BEYOND_SHADOW_FAR(shadowCoord) ? 1.0 : attenuation;
 }
+
+#pragma enable_d3d11_debug_symbols
 //todo:lcl
 half ComputeCascadeIndex(float3 positionWS)
 {
@@ -317,9 +319,11 @@ half ComputeCascadeIndex(float3 positionWS)
     float3 fromCenter5 = positionWS - _CascadeShadowSplitSpheres5.xyz;
     float3 fromCenter6 = positionWS - _CascadeShadowSplitSpheres6.xyz;
     float3 fromCenter7 = positionWS - _CascadeShadowSplitSpheres7.xyz;
+    // 计算每个级联球体中心到位置的距离的平方
     float4 distances2 = float4(dot(fromCenter0, fromCenter0), dot(fromCenter1, fromCenter1), dot(fromCenter2, fromCenter2), dot(fromCenter3, fromCenter3));
     float4 distancesFar2 = float4(dot(fromCenter4, fromCenter4), dot(fromCenter5, fromCenter5), dot(fromCenter6, fromCenter6), dot(fromCenter7, fromCenter7));
-    //
+
+    // 计算每个级联球体的权重，判断位置是否在球体半径内
     half4 weights = half4(distances2 < _CascadeShadowSplitSphereRadii);
     half4 weightsFar = half4(distancesFar2 < _CascadeShadowSplitSphereRadii2);
     // weights.yzw = saturate(weights.yzw - weights.xyz);
@@ -348,7 +352,7 @@ float4 TransformWorldToShadowCoord(float3 positionWS)
 
     float4 shadowCoord = mul(_MainLightWorldToShadow[cascadeIndex], float4(positionWS, 1.0));
     //todo:lcl
-    return float4(shadowCoord.xyz, 0.0);
+    return float4(shadowCoord.xyz, cascadeIndex);
 }
 
 half MainLightRealtimeShadow(float4 shadowCoord)
